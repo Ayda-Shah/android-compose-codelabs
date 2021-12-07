@@ -46,7 +46,12 @@ import kotlin.random.Random
 fun TodoScreen(
     items: List<TodoItem>,
     onAddItem: (TodoItem) -> Unit,
-    onRemoveItem: (TodoItem) -> Unit
+    onRemoveItem: (TodoItem) -> Unit,
+    currentlyEditing: TodoItem?,
+    onStartEdit: (TodoItem) -> Unit,
+    onEditItemSelected: (TodoItem) -> Unit,
+    onEditItemChange: (TodoItem) -> Unit,
+    onEditDone: () -> Unit
 ) {
     Column {
         TodoItemInputBackground(elevate = true, modifier = Modifier.fillMaxWidth()) {
@@ -56,10 +61,22 @@ fun TodoScreen(
             modifier = Modifier.weight(1f),
             contentPadding = PaddingValues(top = 8.dp)
         ) {
-            items(items = items) {
+            items(items = items) { todo ->
+                if (currentlyEditing?.id == todo.id) {
+                    TodoItemInlineEditor(
+                        item = todo,
+                        onEditItemChange = onEditItemChange,
+                        onEditDone = onEditDone,
+                        onRemoveItem = { onRemoveItem(todo) })
+                } else {
+                    TodoRow(
+                        todo,
+                        { onStartEdit(it) },
+                        Modifier.fillParentMaxWidth()
+                    )
+                }
                 TodoRow(
-                    todo = it,
-                    onItemClicked = { onRemoveItem(it) },
+                    todo = todo,
                     modifier = Modifier.fillParentMaxWidth()
                 )
             }
@@ -181,8 +198,23 @@ fun PreviewTodoScreen() {
         TodoItem("Apply state", TodoIcon.Done),
         TodoItem("Build dynamic UIs", TodoIcon.Square)
     )
-    TodoScreen(items, {}, {})
+//    TodoScreen(items, {}, {}, {}, {}, {})
 }
+
+@Composable
+fun TodoItemInlineEditor(
+    item: TodoItem,
+    onEditItemChange: (TodoItem) -> Unit,
+    onEditDone: () -> Unit,
+    onRemoveItem: () -> Unit
+) = TodoItemInput(
+    text = item.task,
+    onTextChange = { onEditItemChange(item.copy(task = it)) },
+    icon = item.icon,
+    onIconChange = { onEditItemChange(item.copy(icon = it)) },
+    submit = onEditDone,
+    iconsVisible = true
+)
 
 @Preview
 @Composable
